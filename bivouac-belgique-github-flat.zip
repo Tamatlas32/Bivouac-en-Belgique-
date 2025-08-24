@@ -1,0 +1,108 @@
+const fs = require('fs');
+const path = require('path');
+
+const projectRoot = path.join(__dirname, 'bivouac-belgique');
+
+const structure = {
+  "index.html": `<!DOCTYPE html>
+<html lang="fr">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>Bivouac Belgique</title>
+  </head>
+  <body>
+    <div id="root"></div>
+    <script type="module" src="/src/index.jsx"></script>
+  </body>
+</html>`,
+
+  "package.json": `{
+  "name": "bivouac-belgique",
+  "version": "1.0.0",
+  "private": true,
+  "scripts": {
+    "dev": "vite",
+    "build": "vite build",
+    "preview": "vite preview"
+  },
+  "dependencies": {
+    "react": "^18.2.0",
+    "react-dom": "^18.2.0",
+    "react-leaflet": "^4.2.1",
+    "leaflet": "^1.9.4"
+  },
+  "devDependencies": {
+    "@vitejs/plugin-react": "^4.0.0",
+    "vite": "^5.0.0",
+    "tailwindcss": "^3.3.2",
+    "autoprefixer": "^10.4.0",
+    "postcss": "^8.4.0"
+  }
+}`,
+
+  "vite.config.js": `import { defineConfig } from 'vite';
+import react from '@vitejs/plugin-react';
+export default defineConfig({ plugins: [react()] });`,
+
+  "tailwind.config.js": `/** @type {import('tailwindcss').Config} */
+export default { content: ["./index.html","./src/**/*.{js,ts,jsx,tsx}"], theme:{extend:{}}, plugins:[] };`,
+
+  "src/index.jsx": `import React from 'react';
+import ReactDOM from 'react-dom/client';
+import App from './App';
+import './index.css';
+ReactDOM.createRoot(document.getElementById('root')).render(<React.StrictMode><App /></React.StrictMode>);`,
+
+  "src/index.css": `@tailwind base;
+@tailwind components;
+@tailwind utilities;
+body { font-family: 'Inter', sans-serif; }`,
+
+  "src/App.jsx": `import Header from './components/Header';
+import Map from './components/Map';
+import AddLocationForm from './components/AddLocationForm';
+import Blog from './components/Blog';
+function App() { return (<div className="bg-green-50 min-h-screen"><Header /><main className="p-4"><h1 className="text-3xl font-bold text-center mb-4">Bivouac Belgique</h1><p className="text-center mb-6">Tous les emplacements gratuits et payants, consultables gratuitement !</p><Map /><AddLocationForm /><Blog /></main></div>); }
+export default App;`,
+
+  "src/data/locations.js": `export const locations = [
+  { id: 1, name: "Camping de la Lesse", type: "payant", lat: 50.155, lng: 5.094, description: "Camping payant au bord de la rivière Lesse. Toilettes, eau et feu autorisé.", photo: "https://upload.wikimedia.org/wikipedia/commons/4/4e/Camping_Lesse.jpg", equipment: ["eau","toilettes","feu"] },
+  { id: 2, name: "Aire de bivouac gratuite Ardennes", type: "gratuit", lat: 50.278, lng: 5.531, description: "Petit emplacement gratuit en pleine nature. Pas de sanitaires.", photo: "https://upload.wikimedia.org/wikipedia/commons/8/88/Ardennes_foret.jpg", equipment:["feu"] },
+  { id: 3, name: "Bivouac près de la Meuse", type: "payant", lat: 50.466, lng: 5.200, description: "Emplacement payant avec eau et toilettes. Accès facile en voiture.", photo: "https://upload.wikimedia.org/wikipedia/commons/5/53/Meuse_river.jpg", equipment:["eau","toilettes"] }
+];`,
+
+  "src/components/Header.jsx": `export default function Header() { return (<header className="bg-green-700 text-white p-4 text-center text-xl font-semibold">Bivouac Belgique</header>); }`,
+
+  "src/components/Filters.jsx": `export default function Filters() { return (<div className="flex justify-center gap-4 mb-4"><button className="bg-green-500 text-white px-4 py-2 rounded hover:bg-green-600">Gratuit</button><button className="bg-yellow-500 text-white px-4 py-2 rounded hover:bg-yellow-600">Payant</button><button className="bg-blue-500 text-white px-4 py-2 rounded hover:bg-blue-600">Tous</button></div>); }`,
+
+  "src/components/Map.jsx": `import { MapContainer, TileLayer, Marker, Popup } from 'react-leaflet';
+import 'leaflet/dist/leaflet.css';
+import { locations } from '../data/locations';
+import Filters from './Filters';
+export default function Map() { return (<div><Filters /><MapContainer center={[50.5,5.3]} zoom={9} style={{height:"70vh", width:"100%"}}><TileLayer url="https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png" />{locations.map(loc=>(<Marker key={loc.id} position={[loc.lat,loc.lng]}><Popup><h2 className="font-bold">{loc.name} ({loc.type})</h2><p>{loc.description}</p><p>Équipements : {loc.equipment.join(", ")}</p><img src={loc.photo} alt={loc.name} className="w-full mt-2 rounded" /></Popup></Marker>))}</MapContainer></div>); }`,
+
+  "src/components/AddLocationForm.jsx": `export default function AddLocationForm() { return (<form className="max-w-md mx-auto p-4 bg-white rounded shadow mb-8"><h2 className="text-xl font-bold mb-2">Proposer un emplacement</h2><input className="w-full mb-2 p-2 border rounded" type="text" placeholder="Nom de l'emplacement" /><input className="w-full mb-2 p-2 border rounded" type="text" placeholder="Latitude" /><input className="w-full mb-2 p-2 border rounded" type="text" placeholder="Longitude" /><select className="w-full mb-2 p-2 border rounded"><option value="gratuit">Gratuit</option><option value="payant">Payant</option></select><textarea className="w-full mb-2 p-2 border rounded" placeholder="Description"></textarea><input className="w-full mb-2 p-2 border rounded" type="text" placeholder="Équipements (séparés par des virgules)" /><button className="bg-green-500 text-white px-4 py-2 rounded hover:bg-green-600">Envoyer</button></form>); }`,
+
+  "src/components/Blog.jsx": `export default function Blog() { return (<section className="max-w-3xl mx-auto p-4"><h2 className="text-2xl font-bold mb-4">Conseils Bivouac</h2><article className="mb-4 p-4 bg-white rounded shadow"><h3 className="font-bold">Bivouac responsable en Belgique</h3><p>Respectez la nature, emportez vos déchets et utilisez les aires prévues pour le feu.</p></article><article className="mb-4 p-4 bg-white rounded shadow"><h3 className="font-bold">Itinéraires recommandés</h3><p>Découvrez les Ardennes et les bords de Meuse pour des bivouacs idylliques.</p></article></section>); }`
+};
+
+function createFiles(basePath, files) {
+  for (const [filePath, content] of Object.entries(files)) {
+    const fullPath = path.join(basePath, filePath);
+    fs.mkdirSync(path.dirname(fullPath), { recursive: true });
+    fs.writeFileSync(fullPath, content, 'utf-8');
+  }
+}
+
+createFiles(projectRoot, structure);
+console.log('Projet Bivouac Belgique créé avec succès !');
+
+node create-bivouac-project.js
+cd bivouac-belgique
+git init
+git add .
+git commit -m "Projet initial Bivouac Belgique"
+git branch -M main
+git remote add origin <URL_DE_TON_DEPOT_GITHUB>
+git push -u origin main
